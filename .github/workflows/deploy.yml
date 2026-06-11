@@ -42,14 +42,9 @@ jobs:
               exit 1
             fi
 
-            # Build and restart containers (supports both docker compose v2 and docker-compose v1)
-            if command -v docker compose &> /dev/null; then
-              docker compose pull || true
-              docker compose up --build -d --remove-orphans
-            else
-              docker-compose pull || true
-              docker-compose up --build -d --remove-orphans
-            fi
+            # Build and restart containers
+            docker-compose pull || true
+            docker-compose up --build -d --remove-orphans
 
             # Clean up unused images
             docker image prune -f
