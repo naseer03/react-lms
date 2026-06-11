@@ -43,8 +43,8 @@ jobs:
             fi
 
             # Build and restart containers
-            docker-compose pull || true
-            docker-compose up --build -d --remove-orphans
+            docker compose pull || true
+            docker compose up --build -d --remove-orphans
 
             # Clean up unused images
             docker image prune -f
