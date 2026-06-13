@@ -71,9 +71,9 @@ const CourseView = () => {
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
   return (
-    <div className="animate-fade-in flex flex-col gap-0 -m-6">
+    <div className="animate-fade-in -m-6 flex flex-col" style={{ height: 'calc(100vh - 73px)' }}>
       {/* Top bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-6 py-3 flex items-center gap-4">
+      <div className="flex-shrink-0 bg-white border-b border-slate-100 px-6 py-3 flex items-center gap-4">
         <button onClick={() => navigate('/student/courses')} className="btn-secondary !py-1.5 !px-3">
           <ArrowLeft size={15} />
         </button>
@@ -94,7 +94,7 @@ const CourseView = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-130px)]">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Main content */}
         <div className="flex-1 overflow-y-auto p-6">
           {!activeLesson ? (
@@ -181,7 +181,7 @@ const CourseView = () => {
         </div>
 
         {/* Sidebar — curriculum */}
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-slate-100 bg-white overflow-y-auto flex-shrink-0">
+        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-slate-100 bg-white overflow-y-auto flex-shrink-0 flex flex-col">
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-sm font-semibold text-slate-700">Course Content</p>
             <p className="text-xs text-slate-400 mt-0.5">{allLessons.length} lessons</p>
