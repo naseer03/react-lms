@@ -21,7 +21,7 @@ const LANG_CONFIG = {
     extension: 'py',
   },
   java: {
-    image: 'openjdk:17-alpine',
+    image: 'eclipse-temurin:17-alpine',
     filename: 'Solution.java',
     cmd: () => ['sh', '-c', 'cd /sandbox && javac Solution.java && java Solution'],
     extension: 'java',
