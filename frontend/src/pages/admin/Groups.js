@@ -373,22 +373,35 @@ const Groups = () => {
 };
 
 const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey, labelKey, subLabelKey, onSave, saving, icon, note }) => {
-  const [selected, setSelected] = useState(new Set(selectedIds));
+  // Normalize all IDs to strings to avoid ObjectId vs string mismatch
+  const normalizedSelected = selectedIds.map(id => id?.toString());
+  const [selected, setSelected] = useState(new Set(normalizedSelected));
   const [search, setSearch] = useState('');
 
+  // Reset state when modal opens with new data
+  const prevOpen = useState(isOpen)[0];
+  if (!prevOpen && isOpen) {
+    // handled by key on parent conditional render
+  }
+
   const toggle = (id) => {
+    const strId = id.toString();
     setSelected(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(strId)) next.delete(strId);
+      else next.add(strId);
       return next;
     });
   };
 
-  const filtered = allItems.filter(item =>
-    item[labelKey]?.toLowerCase().includes(search.toLowerCase()) ||
-    (subLabelKey && item[subLabelKey]?.toLowerCase().includes(search.toLowerCase()))
-  );
+  const q = search.toLowerCase();
+  const filtered = allItems.filter(item => {
+    const label = (item[labelKey] || '').toLowerCase();
+    const sub = subLabelKey ? (item[subLabelKey] || '').toLowerCase() : '';
+    return label.includes(q) || sub.includes(q);
+  });
+
+  const isChecked = (item) => selected.has(item[idKey]?.toString());
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -398,38 +411,53 @@ const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey
         )}
         <input
           className="input"
-          placeholder="Search..."
+          placeholder={`Search ${allItems.length} items...`}
           value={search}
           onChange={e => setSearch(e.target.value)}
+          autoFocus
         />
         <div className="max-h-72 overflow-y-auto space-y-1 border border-slate-200 rounded-xl p-2">
           {filtered.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-4">No items found</p>
+            <p className="text-sm text-slate-400 text-center py-4">No results for "{search}"</p>
           )}
-          {filtered.map(item => (
-            <label
-              key={item[idKey]}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                selected.has(item[idKey]) ? 'bg-primary-50' : 'hover:bg-slate-50'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selected.has(item[idKey])}
-                onChange={() => toggle(item[idKey])}
-                className="rounded text-primary-600"
-              />
-              {icon}
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">{item[labelKey]}</p>
-                {subLabelKey && item[subLabelKey] && (
-                  <p className="text-xs text-slate-400 truncate">{item[subLabelKey]}</p>
+          {filtered.map(item => {
+            const id = item[idKey]?.toString();
+            const checked = selected.has(id);
+            const initials = (item[labelKey] || '?')[0].toUpperCase();
+            return (
+              <label
+                key={id}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                  checked ? 'bg-primary-50 border border-primary-100' : 'hover:bg-slate-50 border border-transparent'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggle(id)}
+                  className="rounded text-primary-600 flex-shrink-0"
+                />
+                {/* Avatar initial */}
+                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
+                  {initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-700">{item[labelKey]}</p>
+                  {subLabelKey && item[subLabelKey] && (
+                    <p className="text-xs text-slate-400">{item[subLabelKey]}</p>
+                  )}
+                </div>
+                {checked && (
+                  <span className="text-xs text-primary-600 font-medium flex-shrink-0">Selected</span>
                 )}
-              </div>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
-        <p className="text-xs text-slate-500">{selected.size} selected</p>
+        <p className="text-xs text-slate-500">
+          {selected.size} of {allItems.length} selected
+          {search && ` · showing ${filtered.length} results`}
+        </p>
         <div className="flex justify-end gap-3">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
           <button
@@ -437,7 +465,7 @@ const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey
             disabled={saving}
             className="btn-primary"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Saving...' : `Save (${selected.size})`}
           </button>
         </div>
       </div>
