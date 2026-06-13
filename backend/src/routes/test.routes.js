@@ -48,6 +48,7 @@ router.get('/:id', authenticate, testController.getTestById);
 router.put('/:id', authenticate, authorize('admin'), testController.updateTest);
 router.delete('/:id', authenticate, authorize('admin'), testController.deleteTest);
 router.patch('/:id/publish', authenticate, authorize('admin'), testController.publishTest);
+router.patch('/:id/assign', authenticate, authorize('admin'), testController.assignTest);
 
 // ── Questions (Admin) ─────────────────────────────────
 router.post('/:testId/questions',

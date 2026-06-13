@@ -8,6 +8,7 @@ export const testService = {
   updateTest: (id, data) => api.put(`/tests/${id}`, data),
   deleteTest: (id) => api.delete(`/tests/${id}`),
   publishTest: (id) => api.patch(`/tests/${id}/publish`),
+  assignTest: (id, studentIds) => api.patch(`/tests/${id}/assign`, { studentIds }),
   getStats: () => api.get('/tests/stats'),
   getAllAttempts: (testId, params) => api.get(`/tests/${testId}/attempts`, { params }),
 

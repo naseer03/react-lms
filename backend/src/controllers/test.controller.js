@@ -127,8 +127,23 @@ const getAllAttempts = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const assignTest = async (req, res, next) => {
+  try {
+    const Test = require('../models/Test');
+    const { studentIds } = req.body; // array of student IDs
+    const test = await Test.findByIdAndUpdate(
+      req.params.id,
+      { assignedTo: studentIds },
+      { new: true }
+    );
+    if (!test) return error(res, 'Test not found', 404);
+    return success(res, { test }, 'Test assigned');
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   createTest, getTests, getTestById, updateTest, deleteTest, publishTest, getTestStats,
   addQuestion, updateQuestion, deleteQuestion, reorderQuestions,
   startAttempt, saveDraft, submitAttempt, getAttemptResult, getMyAttempts, getAllAttempts,
+  assignTest,
 };

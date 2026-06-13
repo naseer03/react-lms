@@ -11,9 +11,10 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Spinner from '../../components/ui/Spinner';
 import StatCard from '../../components/ui/StatCard';
 import { format } from 'date-fns';
+import { studentService } from '../../services/student.service';
 import {
   Plus, ClipboardList, CheckCircle, Users, BarChart3,
-  Pencil, Trash2, Eye, Send, RefreshCw, Search
+  Pencil, Trash2, Eye, Send, RefreshCw, Search, UserPlus
 } from 'lucide-react';
 
 const STATUS_BADGES = {
@@ -30,6 +31,8 @@ const Tests = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [createModal, setCreateModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [assignModal, setAssignModal] = useState(null); // holds the test being assigned
+  const [selectedStudents, setSelectedStudents] = useState([]);
 
   const { data: stats } = useQuery({
     queryKey: ['test-stats'],
@@ -58,6 +61,18 @@ const Tests = () => {
     mutationFn: (id) => testService.publishTest(id),
     onSuccess: () => { toast.success('Test published'); queryClient.invalidateQueries(['tests']); },
     onError: (err) => toast.error(err.response?.data?.message || 'Cannot publish'),
+  });
+
+  const { data: studentsData } = useQuery({
+    queryKey: ['all-students'],
+    queryFn: () => studentService.getStudents({ limit: 200 }).then(r => r.data.data.students),
+    enabled: !!assignModal,
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: ({ id, studentIds }) => testService.assignTest(id, studentIds),
+    onSuccess: () => { toast.success('Test assigned'); setAssignModal(null); setSelectedStudents([]); },
+    onError: () => toast.error('Assign failed'),
   });
 
   const deleteMutation = useMutation({
@@ -103,6 +118,10 @@ const Tests = () => {
           <button onClick={() => navigate(`/admin/tests/${row._id}`)}
             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500" title="Edit">
             <Pencil size={14} />
+          </button>
+          <button onClick={() => { setAssignModal(row); setSelectedStudents(row.assignedTo || []); }}
+            className="p-1.5 hover:bg-purple-50 rounded-lg text-purple-500" title="Assign to students">
+            <UserPlus size={14} />
           </button>
           {row.status === 'draft' && (
             <button onClick={() => publishMutation.mutate(row._id)}
@@ -240,6 +259,41 @@ const Tests = () => {
               placeholder="Rules and instructions shown to students before the test starts..." />
           </div>
         </form>
+      </Modal>
+
+      {/* Assign Modal */}
+      <Modal isOpen={!!assignModal} onClose={() => { setAssignModal(null); setSelectedStudents([]); }}
+        title={`Assign "${assignModal?.title}" to Students`} size="lg"
+        footer={
+          <>
+            <button onClick={() => { setAssignModal(null); setSelectedStudents([]); }} className="btn-secondary">Cancel</button>
+            <button onClick={() => assignMutation.mutate({ id: assignModal._id, studentIds: selectedStudents })}
+              className="btn-primary" disabled={assignMutation.isPending}>
+              {assignMutation.isPending ? <Spinner size="sm" /> : 'Save Assignment'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">Select students who can take this test:</p>
+          <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+            {(studentsData || []).map(s => (
+              <label key={s._id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 accent-primary-600"
+                  checked={selectedStudents.includes(s._id)}
+                  onChange={e => setSelectedStudents(prev =>
+                    e.target.checked ? [...prev, s._id] : prev.filter(id => id !== s._id)
+                  )} />
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{s.name}</p>
+                  <p className="text-xs text-slate-400">{s.email}</p>
+                </div>
+              </label>
+            ))}
+            {!studentsData?.length && <p className="text-center text-slate-400 py-6 text-sm">No students found</p>}
+          </div>
+          <p className="text-xs text-slate-400">{selectedStudents.length} student(s) selected</p>
+        </div>
       </Modal>
 
       <ConfirmDialog
