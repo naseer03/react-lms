@@ -20,6 +20,7 @@ const Groups = () => {
   const [coursesModal, setCoursesModal] = useState(null);
   const [testsModal, setTestsModal] = useState(null);
   const [expandedGroup, setExpandedGroup] = useState(null);
+  const [modalSearch, setModalSearch] = useState('');
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
@@ -30,7 +31,7 @@ const Groups = () => {
 
   const { data: allStudents = [] } = useQuery({
     queryKey: ['all-students'],
-    queryFn: () => studentService.getStudents({ limit: 1000 }).then(r => r.data.data.students),
+    queryFn: () => studentService.getStudents({ limit: 500 }).then(r => r.data.data.students),
   });
 
   const { data: allCourses = [] } = useQuery({
@@ -310,13 +311,15 @@ const Groups = () => {
       {studentsModal && (
         <MultiSelectModal
           isOpen
-          onClose={() => setStudentsModal(null)}
+          onClose={() => { setStudentsModal(null); setModalSearch(''); }}
           title={`Manage Students — ${studentsModal.name}`}
           allItems={allStudents}
-          selectedIds={studentsModal.students?.map(s => s._id) || []}
+          selectedIds={studentsModal.students?.map(s => s._id?.toString()) || []}
           idKey="_id"
           labelKey="name"
           subLabelKey="email"
+          search={modalSearch}
+          onSearch={setModalSearch}
           onSave={(ids) => studentsMutation.mutate({ id: studentsModal._id, studentIds: ids })}
           saving={studentsMutation.isPending}
           icon={<Users size={14} className="text-blue-500" />}
@@ -327,12 +330,14 @@ const Groups = () => {
       {coursesModal && (
         <MultiSelectModal
           isOpen
-          onClose={() => setCoursesModal(null)}
+          onClose={() => { setCoursesModal(null); setModalSearch(''); }}
           title={`Assign Courses — ${coursesModal.name}`}
           allItems={allCourses}
-          selectedIds={coursesModal.assignedCourses?.map(c => c._id) || []}
+          selectedIds={coursesModal.assignedCourses?.map(c => c._id?.toString()) || []}
           idKey="_id"
           labelKey="title"
+          search={modalSearch}
+          onSearch={setModalSearch}
           onSave={(ids) => coursesMutation.mutate({ id: coursesModal._id, courseIds: ids })}
           saving={coursesMutation.isPending}
           icon={<BookOpen size={14} className="text-green-500" />}
@@ -344,12 +349,14 @@ const Groups = () => {
       {testsModal && (
         <MultiSelectModal
           isOpen
-          onClose={() => setTestsModal(null)}
+          onClose={() => { setTestsModal(null); setModalSearch(''); }}
           title={`Assign Tests — ${testsModal.name}`}
           allItems={allTests}
-          selectedIds={testsModal.assignedTests?.map(t => t._id) || []}
+          selectedIds={testsModal.assignedTests?.map(t => t._id?.toString()) || []}
           idKey="_id"
           labelKey="title"
+          search={modalSearch}
+          onSearch={setModalSearch}
           onSave={(ids) => testsMutation.mutate({ id: testsModal._id, testIds: ids })}
           saving={testsMutation.isPending}
           icon={<ClipboardList size={14} className="text-purple-500" />}
@@ -372,36 +379,25 @@ const Groups = () => {
   );
 };
 
-const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey, labelKey, subLabelKey, onSave, saving, icon, note }) => {
-  // Normalize all IDs to strings to avoid ObjectId vs string mismatch
-  const normalizedSelected = selectedIds.map(id => id?.toString());
-  const [selected, setSelected] = useState(new Set(normalizedSelected));
-  const [search, setSearch] = useState('');
-
-  // Reset state when modal opens with new data
-  const prevOpen = useState(isOpen)[0];
-  if (!prevOpen && isOpen) {
-    // handled by key on parent conditional render
-  }
+const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey, labelKey, subLabelKey, search, onSearch, onSave, saving, icon, note }) => {
+  // selected state lives here; it resets each mount (modal conditionally renders so this is fine)
+  const [selected, setSelected] = useState(() => new Set(selectedIds));
 
   const toggle = (id) => {
-    const strId = id.toString();
     setSelected(prev => {
       const next = new Set(prev);
-      if (next.has(strId)) next.delete(strId);
-      else next.add(strId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const q = search.toLowerCase();
+  const q = (search || '').toLowerCase();
   const filtered = allItems.filter(item => {
     const label = (item[labelKey] || '').toLowerCase();
     const sub = subLabelKey ? (item[subLabelKey] || '').toLowerCase() : '';
-    return label.includes(q) || sub.includes(q);
+    return !q || label.includes(q) || sub.includes(q);
   });
-
-  const isChecked = (item) => selected.has(item[idKey]?.toString());
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -411,14 +407,16 @@ const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey
         )}
         <input
           className="input"
-          placeholder={`Search ${allItems.length} items...`}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          placeholder={`Search ${allItems.length} items by name or email...`}
+          value={search || ''}
+          onChange={e => onSearch(e.target.value)}
           autoFocus
         />
         <div className="max-h-72 overflow-y-auto space-y-1 border border-slate-200 rounded-xl p-2">
           {filtered.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-4">No results for "{search}"</p>
+            <p className="text-sm text-slate-400 text-center py-4">
+              {q ? `No results for "${search}"` : 'No items available'}
+            </p>
           )}
           {filtered.map(item => {
             const id = item[idKey]?.toString();
@@ -437,7 +435,6 @@ const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey
                   onChange={() => toggle(id)}
                   className="rounded text-primary-600 flex-shrink-0"
                 />
-                {/* Avatar initial */}
                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
                   {initials}
                 </div>
@@ -456,7 +453,7 @@ const MultiSelectModal = ({ isOpen, onClose, title, allItems, selectedIds, idKey
         </div>
         <p className="text-xs text-slate-500">
           {selected.size} of {allItems.length} selected
-          {search && ` · showing ${filtered.length} results`}
+          {q && ` · ${filtered.length} results`}
         </p>
         <div className="flex justify-end gap-3">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
