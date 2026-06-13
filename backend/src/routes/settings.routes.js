@@ -24,8 +24,8 @@ const certAssetUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// GET is accessible to any logged-in user (students need branding data for the sidebar)
-router.get('/', authenticate, settingsController.getSettings);
+// GET is public — logo, institute name, colors needed before login too
+router.get('/', settingsController.getSettings);
 
 // All write operations require admin
 router.put('/', authenticate, authorize('admin'), settingsController.updateSettings);
