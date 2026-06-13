@@ -61,6 +61,9 @@ router.put('/questions/:questionId', authenticate, authorize('admin'), testContr
 router.delete('/questions/:questionId', authenticate, authorize('admin'), testController.deleteQuestion);
 router.post('/:testId/questions/reorder', authenticate, authorize('admin'), testController.reorderQuestions);
 
+// ── Student: get tests assigned to me ────────────────
+router.get('/my/assigned', authenticate, testController.getMyAssignedTests);
+
 // ── Attempt (Student) ─────────────────────────────────
 router.post('/:testId/attempt/start', authenticate, testController.startAttempt);
 router.post('/attempt/:attemptId/save', authenticate, testController.saveDraft);

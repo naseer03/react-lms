@@ -9,12 +9,8 @@ const StudentTests = () => {
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['published-tests'],
-    queryFn: async () => {
-      // Get all published tests (student sees tests for enrolled courses + general)
-      const res = await testService.getTests({ status: 'published', limit: 50 });
-      return res.data.data;
-    },
+    queryKey: ['my-assigned-tests'],
+    queryFn: () => testService.getMyAssignedTests().then(r => r.data.data),
   });
 
   if (isLoading) return (

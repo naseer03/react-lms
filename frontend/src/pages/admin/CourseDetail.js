@@ -30,6 +30,8 @@ const CourseDetail = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editCourseModal, setEditCourseModal] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
+  const [pdfUploading, setPdfUploading] = useState(null); // lessonId
+  const pdfInputRef = useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['course', id],
@@ -100,6 +102,19 @@ const CourseDetail = () => {
     finally { setThumbUploading(false); }
   };
 
+  const handlePdfUpload = async (lessonId, file) => {
+    if (!file) return;
+    setPdfUploading(lessonId);
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+      await courseService.uploadPdf(lessonId, formData);
+      toast.success('PDF uploaded');
+      invalidate();
+    } catch { toast.error('PDF upload failed'); }
+    finally { setPdfUploading(null); }
+  };
+
   // Forms
   const { register: regModule, handleSubmit: submitModule, reset: resetModule } = useForm();
   const { register: regLesson, handleSubmit: submitLesson, reset: resetLesson, watch: watchLesson } = useForm({ defaultValues: { type: 'video' } });
@@ -155,6 +170,8 @@ const CourseDetail = () => {
           </button>
           <input ref={thumbInputRef} type="file" accept="image/*" className="hidden"
             onChange={(e) => handleThumbUpload(e.target.files[0])} />
+          <input ref={pdfInputRef} type="file" accept=".pdf,.ppt,.pptx" className="hidden"
+            onChange={(e) => { const lessonId = pdfInputRef.current.dataset.lessonid; handlePdfUpload(lessonId, e.target.files[0]); e.target.value = ''; }} />
         </div>
         <div className="flex-1 space-y-1 text-sm">
           <p className="text-slate-600">{course.description}</p>
@@ -248,6 +265,20 @@ const CourseDetail = () => {
                               >
                                 Re-upload
                               </button>
+                            )}
+                            {lesson.type === 'pdf' && (
+                              <>
+                                <button
+                                  onClick={() => { pdfInputRef.current.dataset.lessonid = lesson._id; pdfInputRef.current.click(); }}
+                                  className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 font-medium px-2 py-1 hover:bg-orange-50 rounded-lg"
+                                  disabled={pdfUploading === lesson._id}
+                                >
+                                  {pdfUploading === lesson._id ? <Spinner size="sm" /> : <><Upload size={12} /> {lesson.pdfFile ? 'Replace PDF' : 'Upload PDF'}</>}
+                                </button>
+                                {lesson.pdfFile && (
+                                  <span className="badge badge-success text-xs">PDF Ready</span>
+                                )}
+                              </>
                             )}
                             <button onClick={() => setEditLessonModal(lesson)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">
                               <Pencil size={13} />

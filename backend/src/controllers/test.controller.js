@@ -127,6 +127,24 @@ const getAllAttempts = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const getMyAssignedTests = async (req, res, next) => {
+  try {
+    const Test = require('../models/Test');
+    const Question = require('../models/Question');
+    const tests = await Test.find({
+      status: 'published',
+      assignedTo: req.user._id,
+    }).populate('course', 'title').sort({ createdAt: -1 });
+
+    const testsWithCount = await Promise.all(tests.map(async (t) => {
+      const qCount = await Question.countDocuments({ test: t._id });
+      return { ...t.toJSON(), questionCount: qCount };
+    }));
+
+    return success(res, { tests: testsWithCount }, 'Assigned tests fetched');
+  } catch (err) { next(err); }
+};
+
 const assignTest = async (req, res, next) => {
   try {
     const Test = require('../models/Test');
@@ -145,5 +163,5 @@ module.exports = {
   createTest, getTests, getTestById, updateTest, deleteTest, publishTest, getTestStats,
   addQuestion, updateQuestion, deleteQuestion, reorderQuestions,
   startAttempt, saveDraft, submitAttempt, getAttemptResult, getMyAttempts, getAllAttempts,
-  assignTest,
+  assignTest, getMyAssignedTests,
 };

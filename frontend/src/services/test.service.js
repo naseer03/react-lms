@@ -19,6 +19,7 @@ export const testService = {
   reorderQuestions: (testId, orderedIds) => api.post(`/tests/${testId}/questions/reorder`, { orderedIds }),
 
   // Student
+  getMyAssignedTests: () => api.get('/tests/my/assigned'),
   startAttempt: (testId) => api.post(`/tests/${testId}/attempt/start`),
   saveDraft: (attemptId, draftAnswers) => api.post(`/tests/attempt/${attemptId}/save`, { draftAnswers }),
   submitAttempt: (attemptId, answers) => api.post(`/tests/attempt/${attemptId}/submit`, { answers }),
