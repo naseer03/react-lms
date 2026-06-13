@@ -67,7 +67,7 @@ const executeInSandbox = async (language, code, input = '', timeoutMs = 5000) =>
   const startTime = Date.now();
 
   try {
-    const result = await runDockerContainer(config, runDir, runId, timeoutMs);
+    const result = await runDockerContainer(config, runDir, runId, input, timeoutMs);
     return { ...result, executionTime: Date.now() - startTime };
   } finally {
     // Always clean up temp files
@@ -75,7 +75,7 @@ const executeInSandbox = async (language, code, input = '', timeoutMs = 5000) =>
   }
 };
 
-const runDockerContainer = (config, runDir, runId, timeoutMs) => {
+const runDockerContainer = (config, runDir, runId, input, timeoutMs) => {
   return new Promise((resolve) => {
     // Docker run args with strict resource limits
     const dockerArgs = [
@@ -103,7 +103,7 @@ const runDockerContainer = (config, runDir, runId, timeoutMs) => {
 
     // Send stdin input
     if (docker.stdin) {
-      docker.stdin.write(config.inputFile || '');
+      docker.stdin.write(input || '');
       docker.stdin.end();
     }
 
