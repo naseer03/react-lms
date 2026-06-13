@@ -30,6 +30,7 @@ export const courseService = {
     fd.append('pdf', file);
     return api.post(`/courses/lessons/${lessonId}/pdf`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
+  uploadPpt: (lessonId, formData) => api.post(`/courses/lessons/${lessonId}/ppt`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
   // Student
   getPublished: (params) => api.get('/courses/published', { params }),

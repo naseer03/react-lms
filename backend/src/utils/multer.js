@@ -49,6 +49,20 @@ const pdfUpload = multer({
   },
 });
 
+// PPT upload (up to 100MB)
+const pptUpload = multer({
+  storage: diskStorage('ppts'),
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.ppt', '.pptx'];
+    if (allowed.includes(path.extname(file.originalname).toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PPT/PPTX files are allowed'));
+    }
+  },
+});
+
 // Image upload (thumbnails, logos etc, up to 10MB)
 const imageUpload = multer({
   storage: diskStorage('images'),
@@ -63,4 +77,4 @@ const imageUpload = multer({
   },
 });
 
-module.exports = { videoUpload, pdfUpload, imageUpload };
+module.exports = { videoUpload, pdfUpload, pptUpload, imageUpload };

@@ -21,7 +21,7 @@ const lessonSchema = new mongoose.Schema(
     description: { type: String, trim: true },
     type: {
       type: String,
-      enum: ['video', 'pdf', 'text', 'quiz'],
+      enum: ['video', 'pdf', 'ppt', 'text', 'quiz'],
       default: 'video',
     },
     order: { type: Number, default: 0 },
@@ -32,6 +32,13 @@ const lessonSchema = new mongoose.Schema(
     content: { type: String },
     // For PDF lessons
     pdfFile: {
+      filename: String,
+      originalName: String,
+      size: Number,
+      path: String,
+    },
+    // For PPT lessons
+    pptFile: {
       filename: String,
       originalName: String,
       size: Number,

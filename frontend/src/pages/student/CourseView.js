@@ -152,6 +152,24 @@ const CourseView = () => {
                 </div>
               )}
             </div>
+          ) : activeLesson.type === 'ppt' ? (
+            <div className="max-w-4xl">
+              <h1 className="text-xl font-bold text-slate-800 mb-4">{activeLesson.title}</h1>
+              {activeLesson.pptFile ? (
+                <div className="border border-slate-200 rounded-xl overflow-hidden h-[600px]">
+                  <iframe
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(`${window.location.origin}/uploads/${activeLesson.pptFile.path}`)}&embedded=true`}
+                    className="w-full h-full"
+                    title={activeLesson.title}
+                  />
+                </div>
+              ) : (
+                <div className="card text-center py-16 text-slate-400">
+                  <FileText size={40} className="mx-auto mb-3 text-slate-300" />
+                  <p>No PPT uploaded for this lesson</p>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="max-w-3xl">
               <h1 className="text-xl font-bold text-slate-800 mb-4">{activeLesson.title}</h1>

@@ -13,7 +13,7 @@ import {
   Video, FileText, BookOpen, Eye, EyeOff, Upload, GripVertical
 } from 'lucide-react';
 
-const LESSON_TYPE_ICONS = { video: Video, pdf: FileText, text: BookOpen };
+const LESSON_TYPE_ICONS = { video: Video, pdf: FileText, ppt: FileText, text: BookOpen };
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -30,8 +30,10 @@ const CourseDetail = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editCourseModal, setEditCourseModal] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
-  const [pdfUploading, setPdfUploading] = useState(null); // lessonId
+  const [pdfUploading, setPdfUploading] = useState(null);
   const pdfInputRef = useRef(null);
+  const [pptUploading, setPptUploading] = useState(null);
+  const pptInputRef = useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['course', id],
@@ -102,6 +104,19 @@ const CourseDetail = () => {
     finally { setThumbUploading(false); }
   };
 
+  const handlePptUpload = async (lessonId, file) => {
+    if (!file) return;
+    setPptUploading(lessonId);
+    try {
+      const formData = new FormData();
+      formData.append('ppt', file);
+      await courseService.uploadPpt(lessonId, formData);
+      toast.success('PPT uploaded');
+      invalidate();
+    } catch { toast.error('PPT upload failed'); }
+    finally { setPptUploading(null); }
+  };
+
   const handlePdfUpload = async (lessonId, file) => {
     if (!file) return;
     setPdfUploading(lessonId);
@@ -170,8 +185,10 @@ const CourseDetail = () => {
           </button>
           <input ref={thumbInputRef} type="file" accept="image/*" className="hidden"
             onChange={(e) => handleThumbUpload(e.target.files[0])} />
-          <input ref={pdfInputRef} type="file" accept=".pdf,.ppt,.pptx" className="hidden"
+          <input ref={pdfInputRef} type="file" accept=".pdf" className="hidden"
             onChange={(e) => { const lessonId = pdfInputRef.current.dataset.lessonid; handlePdfUpload(lessonId, e.target.files[0]); e.target.value = ''; }} />
+          <input ref={pptInputRef} type="file" accept=".ppt,.pptx" className="hidden"
+            onChange={(e) => { const lessonId = pptInputRef.current.dataset.lessonid; handlePptUpload(lessonId, e.target.files[0]); e.target.value = ''; }} />
         </div>
         <div className="flex-1 space-y-1 text-sm">
           <p className="text-slate-600">{course.description}</p>
@@ -275,9 +292,19 @@ const CourseDetail = () => {
                                 >
                                   {pdfUploading === lesson._id ? <Spinner size="sm" /> : <><Upload size={12} /> {lesson.pdfFile ? 'Replace PDF' : 'Upload PDF'}</>}
                                 </button>
-                                {lesson.pdfFile && (
-                                  <span className="badge badge-success text-xs">PDF Ready</span>
-                                )}
+                                {lesson.pdfFile && <span className="badge badge-success text-xs">PDF Ready</span>}
+                              </>
+                            )}
+                            {lesson.type === 'ppt' && (
+                              <>
+                                <button
+                                  onClick={() => { pptInputRef.current.dataset.lessonid = lesson._id; pptInputRef.current.click(); }}
+                                  className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1 hover:bg-purple-50 rounded-lg"
+                                  disabled={pptUploading === lesson._id}
+                                >
+                                  {pptUploading === lesson._id ? <Spinner size="sm" /> : <><Upload size={12} /> {lesson.pptFile ? 'Replace PPT' : 'Upload PPT'}</>}
+                                </button>
+                                {lesson.pptFile && <span className="badge badge-success text-xs">PPT Ready</span>}
                               </>
                             )}
                             <button onClick={() => setEditLessonModal(lesson)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">
@@ -428,6 +455,7 @@ const CourseDetail = () => {
             <select {...regLesson('type')} className="input appearance-none">
               <option value="video">Video</option>
               <option value="pdf">PDF</option>
+              <option value="ppt">PPT / PowerPoint</option>
               <option value="text">Text</option>
             </select>
           </div>

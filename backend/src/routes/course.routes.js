@@ -3,7 +3,7 @@ const { body } = require('express-validator');
 const courseController = require('../controllers/course.controller');
 const { authenticate, authorize } = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const { imageUpload, pdfUpload } = require('../utils/multer');
+const { imageUpload, pdfUpload, pptUpload } = require('../utils/multer');
 
 const router = express.Router();
 
@@ -99,6 +99,32 @@ router.post(
         { new: true }
       );
       return res.json({ success: true, message: 'PDF uploaded', data: { lesson } });
+    } catch (err) { next(err); }
+  }
+);
+
+// ── PPT upload for a lesson ──────────────────────────────
+router.post(
+  '/lessons/:lessonId/ppt',
+  pptUpload.single('ppt'),
+  async (req, res, next) => {
+    try {
+      if (!req.file) return res.status(400).json({ success: false, message: 'No PPT uploaded' });
+      const Lesson = require('../models/Lesson');
+      const lesson = await Lesson.findByIdAndUpdate(
+        req.params.lessonId,
+        {
+          type: 'ppt',
+          pptFile: {
+            filename: req.file.filename,
+            originalName: req.file.originalname,
+            size: req.file.size,
+            path: `ppts/${req.file.filename}`,
+          },
+        },
+        { new: true }
+      );
+      return res.json({ success: true, message: 'PPT uploaded', data: { lesson } });
     } catch (err) { next(err); }
   }
 );
