@@ -25,6 +25,7 @@ import TestBuilder from './pages/admin/TestBuilder';
 import Certificates from './pages/admin/Certificates';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import Groups from './pages/admin/Groups';
 
 // Student pages
 import StudentDashboard from './pages/student/Dashboard';
@@ -66,6 +67,7 @@ const App = () => {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="students" element={<Students />} />
+            <Route path="groups" element={<Groups />} />
             <Route path="courses" element={<Courses />} />
             <Route path="courses/:id" element={<CourseDetail />} />
             <Route path="tests" element={<Tests />} />

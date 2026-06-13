@@ -5,12 +5,13 @@ import { useSettings } from '../contexts/SettingsContext';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, Users, BookOpen, ClipboardList, Award,
-  BarChart3, Settings, LogOut, Menu, X, GraduationCap, ChevronDown, Bell
+  BarChart3, Settings, LogOut, Menu, X, GraduationCap, ChevronDown, Bell, UsersRound
 } from 'lucide-react';
 
 const navItems = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/students', icon: Users, label: 'Students' },
+  { to: '/admin/groups', icon: UsersRound, label: 'Groups' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
   { to: '/admin/tests', icon: ClipboardList, label: 'Tests' },
   { to: '/admin/certificates', icon: Award, label: 'Certificates' },
