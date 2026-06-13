@@ -108,9 +108,7 @@ const CourseDetail = () => {
     if (!file) return;
     setPptUploading(lessonId);
     try {
-      const formData = new FormData();
-      formData.append('ppt', file);
-      await courseService.uploadPpt(lessonId, formData);
+      await courseService.uploadPpt(lessonId, file);
       toast.success('PPT uploaded');
       invalidate();
     } catch { toast.error('PPT upload failed'); }
@@ -121,9 +119,7 @@ const CourseDetail = () => {
     if (!file) return;
     setPdfUploading(lessonId);
     try {
-      const formData = new FormData();
-      formData.append('pdf', file);
-      await courseService.uploadPdf(lessonId, formData);
+      await courseService.uploadPdf(lessonId, file);
       toast.success('PDF uploaded');
       invalidate();
     } catch { toast.error('PDF upload failed'); }

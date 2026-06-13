@@ -26,11 +26,13 @@ export const courseService = {
   deleteLesson: (lessonId) => api.delete(`/courses/lessons/${lessonId}`),
   reorderLessons: (moduleId, orderedIds) => api.post(`/courses/modules/${moduleId}/lessons/reorder`, { orderedIds }),
   uploadPdf: (lessonId, file) => {
-    const fd = new FormData();
-    fd.append('pdf', file);
+    const fd = new FormData(); fd.append('pdf', file);
     return api.post(`/courses/lessons/${lessonId}/pdf`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
-  uploadPpt: (lessonId, formData) => api.post(`/courses/lessons/${lessonId}/ppt`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadPpt: (lessonId, file) => {
+    const fd = new FormData(); fd.append('ppt', file);
+    return api.post(`/courses/lessons/${lessonId}/ppt`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 
   // Student
   getPublished: (params) => api.get('/courses/published', { params }),
