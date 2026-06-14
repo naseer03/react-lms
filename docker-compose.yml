@@ -10,9 +10,12 @@ services:
     env_file: ./backend/.env
     ports:
       - "5500:5000"
+    environment:
+      HOST_SANDBOX_DIR: /var/www/lms/backend/tmp/sandbox
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/logs:/app/logs
+      - ./backend/tmp:/app/tmp
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - mongo

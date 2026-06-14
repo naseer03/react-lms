@@ -54,23 +54,22 @@ const executeInSandbox = async (language, code, input = '', timeoutMs = 5000) =>
   const config = LANG_CONFIG[language];
   if (!config) throw new Error(`Unsupported language: ${language}`);
 
-  // Write code to a temp directory
   const runId = crypto.randomBytes(8).toString('hex');
+  // Container-local path for writing files
   const runDir = path.join(TMP_DIR, runId);
-  fs.mkdirSync(runDir, { recursive: true });
+  // Host path for the -v mount (Docker daemon resolves paths on the host, not inside the container)
+  const hostSandboxBase = process.env.HOST_SANDBOX_DIR || TMP_DIR;
+  const hostRunDir = path.join(hostSandboxBase, runId);
 
-  const codeFile = path.join(runDir, config.filename);
-  const inputFile = path.join(runDir, 'input.txt');
-  fs.writeFileSync(codeFile, code, 'utf8');
-  fs.writeFileSync(inputFile, input, 'utf8');
+  fs.mkdirSync(runDir, { recursive: true });
+  fs.writeFileSync(path.join(runDir, config.filename), code, 'utf8');
 
   const startTime = Date.now();
 
   try {
-    const result = await runDockerContainer(config, runDir, runId, input, timeoutMs);
+    const result = await runDockerContainer(config, hostRunDir, runId, input, timeoutMs);
     return { ...result, executionTime: Date.now() - startTime };
   } finally {
-    // Always clean up temp files
     fs.rmSync(runDir, { recursive: true, force: true });
   }
 };
