@@ -104,6 +104,8 @@ const CodingEditor = ({ question, attemptId, onSubmitResult, readOnly = false })
     monacoRef.current.editor.setModelLanguage(editorRef.current.getModel(), monacoLang);
   }, [language]);
 
+  const visibleTestCases = question?.testCases?.filter(tc => !tc.isHidden) || [];
+
   const handleRun = useCallback(async () => {
     if (!code.trim()) return toast.error('Write some code first');
     setRunning(true);
@@ -170,8 +172,6 @@ const CodingEditor = ({ question, attemptId, onSubmitResult, readOnly = false })
     setCode(starter);
     if (editorRef.current) editorRef.current.setValue(starter);
   };
-
-  const visibleTestCases = question?.testCases?.filter(tc => !tc.isHidden) || [];
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] rounded-xl overflow-hidden">
