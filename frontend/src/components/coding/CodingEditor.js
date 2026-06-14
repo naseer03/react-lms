@@ -107,16 +107,34 @@ const CodingEditor = ({ question, attemptId, onSubmitResult, readOnly = false })
   const handleRun = useCallback(async () => {
     if (!code.trim()) return toast.error('Write some code first');
     setRunning(true);
-    setActiveTab('testcases');
+
+    const hasVisibleCases = visibleTestCases.length > 0;
+    // Always switch to output so the student sees something; testcases tab also updates if cases exist
+    setActiveTab(hasVisibleCases ? 'testcases' : 'output');
+
     try {
-      const { data } = await codingService.run({ questionId: question._id, language, code });
-      setRunResult(data.data);
+      // Always run code for stdout display (using whatever is in customInput box, or empty)
+      const customPromise = codingService.runCustom({ language, code, input: customInput });
+
+      if (hasVisibleCases) {
+        // Run against visible test cases in parallel
+        const [{ data }, { data: customData }] = await Promise.all([
+          codingService.run({ questionId: question._id, language, code }),
+          customPromise,
+        ]);
+        setRunResult({ ...data.data, customOutput: customData.data });
+      } else {
+        // No test cases — just show output
+        const { data: customData } = await customPromise;
+        setRunResult({ customOutput: customData.data, results: [], passedCount: 0, totalCount: 0 });
+        setActiveTab('output');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Execution failed');
     } finally {
       setRunning(false);
     }
-  }, [code, language, question]);
+  }, [code, language, question, customInput, visibleTestCases]);
 
   const handleRunCustom = useCallback(async () => {
     if (!code.trim()) return toast.error('Write some code first');
@@ -278,30 +296,35 @@ const CodingEditor = ({ question, attemptId, onSubmitResult, readOnly = false })
 
           {/* Output tab */}
           {activeTab === 'output' && (
-            <div>
+            <div className="font-mono text-xs">
               {runResult?.customOutput ? (
-                <div className="font-mono text-xs">
-                  {runResult.customOutput.stdout && (
+                <>
+                  {runResult.customOutput.stdout ? (
                     <div>
-                      <p className="text-slate-400 mb-1">stdout:</p>
+                      <p className="text-slate-400 mb-1">Output:</p>
                       <pre className="text-emerald-400 whitespace-pre-wrap">{runResult.customOutput.stdout}</pre>
                     </div>
+                  ) : (
+                    <p className="text-slate-500">(no output)</p>
                   )}
                   {runResult.customOutput.stderr && (
                     <div className="mt-2">
-                      <p className="text-slate-400 mb-1">stderr:</p>
+                      <p className="text-slate-400 mb-1">Error:</p>
                       <pre className="text-red-400 whitespace-pre-wrap">{runResult.customOutput.stderr}</pre>
                     </div>
                   )}
                   {runResult.customOutput.timedOut && (
                     <p className="text-amber-400">⏱ Time Limit Exceeded</p>
                   )}
-                  <p className="text-slate-500 mt-2 flex items-center gap-1 text-xs">
+                  {runResult.customOutput.exitCode !== undefined && runResult.customOutput.exitCode !== 0 && !runResult.customOutput.timedOut && (
+                    <p className="text-amber-400 mt-1">Exit code: {runResult.customOutput.exitCode}</p>
+                  )}
+                  <p className="text-slate-500 mt-2 flex items-center gap-1">
                     <Clock size={10} /> {runResult.customOutput.executionTime}ms
                   </p>
-                </div>
+                </>
               ) : (
-                <p className="text-slate-500 text-xs">Run with custom input to see output here</p>
+                <p className="text-slate-500">Click Run to see output</p>
               )}
             </div>
           )}
